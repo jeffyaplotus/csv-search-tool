@@ -2,20 +2,21 @@ import streamlit as st
 import pandas as pd
 import requests
 
-st.set_page_config(page_title="HSA Therapeutic Product Search", layout="wide")
+st.set_page_config(page_title="HSA Product Search", layout="wide")
 
-API_URL = "https://data.gov.sg/api/action/datastore_search?resource_id=f1f3e1d2-5a8e-4f3e-a285-d7df57a6dcaf&limit=10000"
+# Correct dataset ID
+DATASET_ID = "d_767279312753558cbf19d48344577084"
+API_URL = f"https://data.gov.sg/api/action/datastore_search?resource_id={DATASET_ID}&limit=10000"
 
 @st.cache_data
 def load_data():
-    response = requests.get(API_URL)
-    response.raise_for_status()
-    data = response.json()
-    records = data['result']['records']
-    df = pd.DataFrame(records)
-    return df
+    resp = requests.get(API_URL)
+    resp.raise_for_status()
+    data = resp.json()
+    records = data["result"]["records"]
+    return pd.DataFrame(records)
 
-st.title("🔍 HSA Therapeutic Product Register")
+st.title("🔍 HSA Therapeutic Products")
 
 try:
     df = load_data()
@@ -23,20 +24,20 @@ except Exception as e:
     st.error(f"Could not load data: {e}")
     st.stop()
 
-query = st.text_input("Search by product name, active ingredient, or manufacturer:")
+st.write(f"Total rows: {len(df)}")
+st.write("Columns:", df.columns.tolist())
+
+query = st.text_input("Search term (e.g., product name, ingredient, manufacturer):")
 
 if query:
-    filtered = df[df.apply(lambda row: row.astype(str).str.contains(query, case=False), axis=1)]
-    st.success(f"Found {len(filtered)} result(s):")
-    # Show only useful fields
+    filtered = df[df.astype(str).apply(lambda col: col.str.contains(query, case=False)).any(axis=1)]
+    st.success(f"Found {len(filtered)} results")
     st.dataframe(filtered[[
         "product_name",
         "active_ingredients",
         "license_holder",
         "manufacturer",
-        "route_of_administration",
-        "dosage_form",
-        "country_of_manufacturer"
+        "route_of_administration"
     ]], use_container_width=True)
 else:
-    st.info("Enter a keyword above to search listings.")
+    st.info("Start typing to search")
