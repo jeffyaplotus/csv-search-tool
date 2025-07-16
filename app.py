@@ -32,12 +32,6 @@ query = st.text_input("Search term (e.g., product name, ingredient, manufacturer
 if query:
     filtered = df[df.astype(str).apply(lambda col: col.str.contains(query, case=False)).any(axis=1)]
     st.success(f"Found {len(filtered)} results")
-    st.dataframe(filtered[[
-        "product_name",
-        "active_ingredients",
-        "license_holder",
-        "manufacturer",
-        "route_of_administration"
-    ]], use_container_width=True)
+    st.dataframe(filtered, use_container_width=True)
 else:
     st.info("Start typing to search")
